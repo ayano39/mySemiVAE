@@ -2,13 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="63f7defd-592c-4656-9f64-0b5a3b351742" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/dictionaries/user.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/mySemiVAE.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/mySemiVAE.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dictionaries/user.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dictionaries/user.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/load_data.py" beforeDir="false" afterPath="$PROJECT_DIR$/load_data.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/make_semi_dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/make_semi_dataset.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/playground.py" beforeDir="false" afterPath="$PROJECT_DIR$/playground.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/run_vae.py" beforeDir="false" afterPath="$PROJECT_DIR$/run_vae.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -19,12 +17,13 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="run_vae.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/run_vae.py">
+      <file leaf-file-name="load_data.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/load_data.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state>
+            <state relative-caret-position="502">
+              <caret line="63" column="13" lean-forward="true" selection-start-line="63" selection-start-column="13" selection-end-line="63" selection-end-column="13" />
               <folding>
-                <element signature="e#0#9#0" expanded="true" />
+                <element signature="e#0#11#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -33,10 +32,19 @@
       <file leaf-file-name="make_semi_dataset.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/make_semi_dataset.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-677">
-              <caret line="39" column="19" lean-forward="true" selection-start-line="39" selection-start-column="19" selection-end-line="39" selection-end-column="19" />
+            <state relative-caret-position="-535">
+              <caret column="11" lean-forward="true" selection-start-column="11" selection-end-column="11" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="run_vae.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/run_vae.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="100">
+              <caret line="103" column="12" lean-forward="true" selection-start-line="103" selection-start-column="12" selection-end-line="103" selection-end-column="36" />
               <folding>
-                <element signature="e#0#11#0" expanded="true" />
+                <element signature="e#0#9#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -45,20 +53,20 @@
       <file leaf-file-name="playground.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/playground.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="452">
-              <caret line="29" column="28" lean-forward="true" selection-start-line="29" selection-start-column="28" selection-end-line="29" selection-end-column="28" />
+            <state relative-caret-position="602">
+              <caret line="65" column="61" selection-start-line="65" selection-start-column="61" selection-end-line="65" selection-end-column="61" />
               <folding>
-                <element signature="e#25#36#0" expanded="true" />
+                <element signature="e#0#23#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="generate_data.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/generate_data.py">
+      <file leaf-file-name="vae_model.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/vae_model.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state>
-              <caret column="18" lean-forward="true" selection-start-column="18" selection-end-column="18" />
+            <state relative-caret-position="1373">
+              <caret line="128" lean-forward="true" selection-start-line="128" selection-end-line="128" />
             </state>
           </provider>
         </entry>
@@ -68,6 +76,8 @@
   <component name="FindInProjectRecents">
     <findStrings>
       <find>shuffle</find>
+      <find>self.y</find>
+      <find>train_size</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -77,6 +87,8 @@
     <option name="CHANGED_PATHS">
       <list>
         <option value="$PROJECT_DIR$/make_semi_dataset.py" />
+        <option value="$PROJECT_DIR$/load_data.py" />
+        <option value="$PROJECT_DIR$/run_vae.py" />
         <option value="$PROJECT_DIR$/playground.py" />
       </list>
     </option>
@@ -100,11 +112,6 @@
             <path>
               <item name="mySemiVAE" type="b2602c69:ProjectViewProjectNode" />
               <item name="mySemiVAE" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="mySemiVAE" type="b2602c69:ProjectViewProjectNode" />
-              <item name="mySemiVAE" type="462c0819:PsiDirectoryNode" />
-              <item name="dataset" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -265,15 +272,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/run_vae.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/generate_data.py">
       <provider selected="true" editor-type-id="text-editor">
         <state>
@@ -281,22 +279,46 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/make_semi_dataset.py">
+    <entry file="file://$PROJECT_DIR$/load_data.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-677">
-          <caret line="39" column="19" lean-forward="true" selection-start-line="39" selection-start-column="19" selection-end-line="39" selection-end-column="19" />
+        <state relative-caret-position="502">
+          <caret line="63" column="13" lean-forward="true" selection-start-line="63" selection-start-column="13" selection-end-line="63" selection-end-column="13" />
           <folding>
             <element signature="e#0#11#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/vae_model.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1373">
+          <caret line="128" lean-forward="true" selection-start-line="128" selection-end-line="128" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/make_semi_dataset.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-535">
+          <caret column="11" lean-forward="true" selection-start-column="11" selection-end-column="11" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/run_vae.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="100">
+          <caret line="103" column="12" lean-forward="true" selection-start-line="103" selection-start-column="12" selection-end-line="103" selection-end-column="36" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/playground.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="452">
-          <caret line="29" column="28" lean-forward="true" selection-start-line="29" selection-start-column="28" selection-end-line="29" selection-end-column="28" />
+        <state relative-caret-position="602">
+          <caret line="65" column="61" selection-start-line="65" selection-start-column="61" selection-end-line="65" selection-end-column="61" />
           <folding>
-            <element signature="e#25#36#0" expanded="true" />
+            <element signature="e#0#23#0" expanded="true" />
           </folding>
         </state>
       </provider>

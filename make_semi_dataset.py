@@ -29,9 +29,9 @@ class DataSampler(object):
     def pack_equally(self, pack_size, with_label, pack_and_remove=False):
         if pack_size == 0:
             if with_label:
-                return None, None
+                return np.array([], np.float32), np.array([], np.float32)
             else:
-                return None
+                return np.array([], np.float32)
 
         assert pack_size % self.num_types == 0, "pack_size % num_types != 0"
         size_per_type = pack_size // self.num_types
@@ -94,4 +94,3 @@ def sample_fix_unlabelled(unlabelled_size, labelled_settings):
 if __name__ == "__main__":
     sample_fix_labelled(fixed_size, settings)
     sample_fix_unlabelled(fixed_size, settings)
-    # train = (train[0], train[1], np.array([], np.float32))

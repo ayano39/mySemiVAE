@@ -1,8 +1,11 @@
-#import tensorflow as tf
+import tensorflow as tf
+import time
 import gzip
 import pickle
 from generate_data import save_as_images_grid
+
 '''
+# Experiments on tf.equal
 a = [1, 0, 0]
 b = [0, 0, 0]
 c = tf.equal(a, b)
@@ -12,6 +15,7 @@ sess = tf.InteractiveSession()
 print(sess.run([c, d]))
 '''
 
+'''
 # To confirm the correctness of dataset sampling
 f_0 = gzip.open("dataset/mnist_u1000_l0.pkl.gz", "rb")
 f_1000 = gzip.open("dataset/mnist_u1000_l1000.pkl.gz", "rb")
@@ -30,3 +34,36 @@ save_as_images_grid("1000", data_1000[0][0][:100], 100, 10)
 print(data_1000[0][1][:100])
 save_as_images_grid("10000", data_10000[0][0][:100], 100, 10)
 print(data_10000[0][1][:100])
+'''
+
+# To confirm the efficiency of reduce_sum, reduce_max, count_nonzero
+a = [0] * 10
+b = tf.reduce_sum(a)
+c = tf.reduce_max(a)
+d = tf.count_nonzero(a)
+
+sess = tf.InteractiveSession()
+
+print(sess.run([b, c, d]))
+start_time = time.time()
+
+for i in range(10000):
+    sess.run(d)
+stop_time = time.time()
+print("Time for count_nonzero: {}".format((stop_time-start_time) / 10000))
+
+
+start_time = time.time()
+for i in range(10000):
+    sess.run(c)
+stop_time = time.time()
+print("Time for reduce_max: {}".format((stop_time-start_time) / 10000))
+
+start_time = time.time()
+for i in range(10000):
+    sess.run(b)
+stop_time = time.time()
+print("Time for reduce_sum: {}".format((stop_time-start_time) / 10000))
+
+
+

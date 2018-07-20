@@ -25,20 +25,21 @@ def train():
     else:
         raise ValueError("Unsupported dataset!")
 
-    '''
+
     l_ratio = FLAGS.labelled_size / data_loader.train_size
-    l_batch_size = max(1, int(l_ratio * FLAGS.batch_size))
-    u_batch_size = max(1, int((1 - l_ratio) * FLAGS.batch_size))
-    '''
-    l_batch_size = FLAGS.batch_size
-    u_batch_size = FLAGS.batch_size
+
+
+    if l_train_data is None:
+        pass
+    if u_train_data is None:
+        pass
 
     l_train_data = l_train_data.apply(tf.contrib.data.shuffle_and_repeat(10000)) \
-        .batch(l_batch_size) \
-        .prefetch(buffer_size=l_batch_size)
+        .batch(FLAGS.batch_size) \
+        .prefetch(buffer_size=FLAGS.batch_size)
     u_train_data = u_train_data.apply(tf.contrib.data.shuffle_and_repeat(10000)) \
-        .batch(u_batch_size) \
-        .prefetch(buffer_size=u_batch_size)
+        .batch(FLAGS.batch_size) \
+        .prefetch(buffer_size=FLAGS.batch_size)
     valid_data = valid_data.batch(FLAGS.batch_size) \
         .prefetch(buffer_size=FLAGS.batch_size)
 

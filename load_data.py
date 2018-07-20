@@ -1,4 +1,3 @@
-import os
 import gzip
 import pickle
 import tensorflow as tf
@@ -13,7 +12,11 @@ class DataLoader(object):
         self.pure_unsupervised = False
 
     def read_pickle_file(self, f_name, if_semi=False):
-        # Return numpy arrays
+        # When 'if_semi' is False, the data is assumed to be structured like
+        # ((train_x, train_y), (valid_x, valid_y), (test_x, test_y); Otherwise,
+        # the data will be ((train_labelled_x, train_labelled_y, train_unlabelled_x),
+        #  (valid_x, valid_y), (test_x, test_y))
+        # Return: numpy arrays
         f = gzip.open(f_name, 'rb')
         train, valid, test = pickle.load(f, encoding="bytes")
         if if_semi:
@@ -42,21 +45,25 @@ class DataLoader(object):
         dataset = tf.data.Dataset.from_tensor_slices(image_array)
         return dataset
 
-    def load_original_mnist(self, f_name, valid_size=1000):
+    def load_original_mnist(self, f_name):
         train, valid, test = self.read_pickle_file(f_name, if_semi=False)
         train_data = self.load_data_with_label(*train)
-        valid_data = self.load_data_with_label(*valid[:valid_size])
+        valid_data = self.load_data_with_label(*valid)
         test_data = self.load_data_with_label(*test)
-        self.valid_size = valid_size
         return train_data, valid_data, test_data
 
-    def load_semi_mnist(self, f_name, valid_size=1000):
+    def load_semi_mnist(self, f_name):
         train, valid, test = self.read_pickle_file(f_name, if_semi=True)
-        if not self.pure_unsupervised:
-            l_train_data = self.load_data_with_label(train[0], train[1])
+        if self.pure_unsupervised:
+            l_train_data = None
         else:
-            l_train_data = self.load_data_without_label(train[0])
-        u_train_data = self.load_data_without_label(train[2])
-        valid_data = self.load_data_with_label(*valid[:valid_size])
+            l_train_data = self.load_data_with_label(train[0], train[1])
+
+        if self.pure_supervised:
+            u_train_data = None
+        else:
+            u_train_data = self.load_data_without_label(train[2])
+
+        valid_data = self.load_data_with_label(*valid)
         test_data = self.load_data_with_label(*test)
         return l_train_data, u_train_data, valid_data, test_data
