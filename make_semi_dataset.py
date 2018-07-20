@@ -4,9 +4,11 @@ import numpy as np
 from collections import defaultdict
 
 fin_name = "dataset/mnist_28.pkl.gz"
-fout_name = "dataset/{}/mnist_labelled_size{}.pkl.gz"
+l_fout_name = "dataset/mnist_l{}_u{}.pkl.gz"
+u_fout_name = "dataset/mnist_u{}_l{}.pkl.gz"
 fixed_size = 1000
 settings = [0, 10, 100, 1000, 10000]
+
 
 class DataSampler(object):
     def __init__(self, x_all, y_all):
@@ -19,13 +21,15 @@ class DataSampler(object):
         for x, y in zip(x_all, y_all):
             label_to_x_list[y].append(x)
         self.num_types = len(label_to_x_list)
-        self.label_to_x_array = [np.random.shuffle(np.asarray(label_to_x_list[i]))
-                            for i in range(self.num_types)]
+        self.label_to_x_array = [np.asarray(label_to_x_list[i])
+                                 for i in range(self.num_types)]
+        shuffler = lambda array: np.random.shuffle(array)
+        map(shuffler, self.label_to_x_array)
 
     def pack_equally(self, pack_size, with_label, pack_and_remove=False):
         if pack_size == 0:
             if with_label:
-                return (None, None)
+                return None, None
             else:
                 return None
 
@@ -61,10 +65,10 @@ def sample_fix_labelled(labelled_size, unlabelled_settings):
     train, valid, test = read_pickle_file(fin_name)
     data_sampler = DataSampler(*train)
     x_labelled, y_labelled = data_sampler.pack_equally(labelled_size,
-                                               with_label=True,
-                                               pack_and_remove=True)
+                                                       with_label=True,
+                                                       pack_and_remove=True)
     for unlabelled_size in unlabelled_settings:
-        f_name = fout_name.format("fix_labelled", unlabelled_size)
+        f_name = l_fout_name.format(labelled_size, unlabelled_size)
         x_unlabelled = data_sampler.pack_equally(unlabelled_size, with_label=False)
         with gzip.open(f_name, "wb") as f:
             train_repack = (x_labelled, y_labelled, x_unlabelled)
@@ -79,7 +83,7 @@ def sample_fix_unlabelled(unlabelled_size, labelled_settings):
                                              pack_and_remove=True)
 
     for labelled_size in labelled_settings:
-        f_name = fout_name.format("fix_unlabelled", labelled_size)
+        f_name = u_fout_name.format(unlabelled_size, labelled_size)
         x_labelled, y_labelled = data_sampler.pack_equally(labelled_size,
                                                            with_label=True)
         with gzip.open(f_name, "wb") as f:
