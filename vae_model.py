@@ -7,29 +7,34 @@ trans_activation = {
 
 
 class VAE(object):
-    def __init__(self, FLAGS, pure_supervised=False, pure_unsupervised=False):
+    def __init__(self, FLAGS,
+                 pure_supervised=False,
+                 pure_unsupervised=False,
+                 mute_class_loss=False
+                 ):
         self.x = None
         self.y = None
         self.FLAGS = FLAGS
-        self.l_batch_size = tf.placeholder(tf.int32, shape=[])
         self.pure_supervised = pure_supervised
         self.pure_unsupervised = pure_unsupervised
+        self.mute_class_loss = mute_class_loss
         self.activation = trans_activation[FLAGS.activation]
+        self.l_batch_size = tf.placeholder(tf.int32, shape=[])
         self.z_mean = None
         self.z_var = None
         self.z_std = None
         self.z = None
+        self.x_gen = None
+        self.x_gen_sigmoid = None
+        self.class_logits = None
+        self.prediction = None
+        self.accuracy = None
         self.kld_loss = None
         self.recon_loss = None
         self.class_loss = None
-        self.class_logits = None
         self.L = None
         self.train_op = None
-        self.x_gen = None
-        self.x_gen_sigmoid = None
         self.merged_summary = None
-        self.prediction = None
-        self.accuracy = None
 
     def build_encoder(self):
         with tf.variable_scope("Encoder"):
@@ -91,7 +96,7 @@ class VAE(object):
                 axis=1
             )
 
-            if self.pure_unsupervised:
+            if self.pure_unsupervised or self.mute_class_loss:
                 self.class_loss = tf.constant(0, dtype=tf.float32)
             else:
                 self.class_loss = tf.nn.softmax_cross_entropy_with_logits(
@@ -118,6 +123,8 @@ class VAE(object):
     def build_model(self, labelled_x, labelled_y, unlabelled_x):
         if self.pure_supervised:
             self.x = labelled_x
+        elif self.pure_unsupervised:
+            self.x = unlabelled_x
         else:
             self.x = tf.concat([labelled_x, unlabelled_x], axis=0)
         self.y = labelled_y
@@ -127,4 +134,3 @@ class VAE(object):
             self.build_decoder()
             self.build_discriminator()
             self.build_loss()
-

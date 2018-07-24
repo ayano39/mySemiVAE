@@ -4,10 +4,9 @@ import numpy as np
 from collections import defaultdict
 
 fin_name = "dataset/mnist_28.pkl.gz"
-l_fout_name = "dataset/mnist_l{}_u{}.pkl.gz"
-u_fout_name = "dataset/mnist_u{}_l{}.pkl.gz"
-fixed_size = 1000
-settings = [0, 10, 100, 1000, 10000]
+fout_name = "dataset/mnist_l{}_u{}.pkl.gz"
+fixed_size = 40000
+settings = [0, 10, 100, 1000, 5000]
 
 
 class DataSampler(object):
@@ -68,7 +67,7 @@ def sample_fix_labelled(labelled_size, unlabelled_settings):
                                                        with_label=True,
                                                        pack_and_remove=True)
     for unlabelled_size in unlabelled_settings:
-        f_name = l_fout_name.format(labelled_size, unlabelled_size)
+        f_name = fout_name.format(labelled_size, unlabelled_size)
         x_unlabelled = data_sampler.pack_equally(unlabelled_size, with_label=False)
         with gzip.open(f_name, "wb") as f:
             train_repack = (x_labelled, y_labelled, x_unlabelled)
@@ -83,7 +82,7 @@ def sample_fix_unlabelled(unlabelled_size, labelled_settings):
                                              pack_and_remove=True)
 
     for labelled_size in labelled_settings:
-        f_name = u_fout_name.format(unlabelled_size, labelled_size)
+        f_name = fout_name.format(labelled_size, unlabelled_size)
         x_labelled, y_labelled = data_sampler.pack_equally(labelled_size,
                                                            with_label=True)
         with gzip.open(f_name, "wb") as f:
@@ -92,5 +91,5 @@ def sample_fix_unlabelled(unlabelled_size, labelled_settings):
 
 
 if __name__ == "__main__":
-    sample_fix_labelled(fixed_size, settings)
+    #sample_fix_labelled(fixed_size, settings)
     sample_fix_unlabelled(fixed_size, settings)
