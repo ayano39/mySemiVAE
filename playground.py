@@ -37,33 +37,47 @@ print(data_10000[0][1][:100])
 '''
 
 # To confirm the efficiency of reduce_sum, reduce_max, count_nonzero
-a = [0] * 10
-b = tf.reduce_sum(a)
-c = tf.reduce_max(a)
-d = tf.count_nonzero(a)
+# a = [0] * 10000
+# b = tf.reduce_sum(a)
+# c = tf.reduce_max(a)
+# d = tf.count_nonzero(a)
+#
+# sess = tf.InteractiveSession()
+#
+# print(sess.run([b, c, d]))
+# start_time = time.time()
+#
+# for i in range(10000):
+#     sess.run(d)
+# stop_time = time.time()
+# print("Time for count_nonzero: {}".format((stop_time-start_time) / 10000))
+#
+#
+# start_time = time.time()
+# for i in range(10000):
+#     sess.run(c)
+# stop_time = time.time()
+# print("Time for reduce_max: {}".format((stop_time-start_time) / 10000))
+#
+# start_time = time.time()
+# for i in range(10000):
+#     sess.run(b)
+# stop_time = time.time()
+# print("Time for reduce_sum: {}".format((stop_time-start_time) / 10000))
+#
+#
+#
 
-sess = tf.InteractiveSession()
+batch_size = 0
+dim_x = 5
+l_batch_size = 4
 
-print(sess.run([b, c, d]))
-start_time = time.time()
+a = tf.random_normal([batch_size, dim_x])
+hidden = tf.layers.dense(a, 10)[:l_batch_size, :]
 
-for i in range(10000):
-    sess.run(d)
-stop_time = time.time()
-print("Time for count_nonzero: {}".format((stop_time-start_time) / 10000))
+with tf.Session() as sess:
+    sess.run(tf.global_variables_initializer())
+    val_a, val_hidden = sess.run([a, hidden])
 
-
-start_time = time.time()
-for i in range(10000):
-    sess.run(c)
-stop_time = time.time()
-print("Time for reduce_max: {}".format((stop_time-start_time) / 10000))
-
-start_time = time.time()
-for i in range(10000):
-    sess.run(b)
-stop_time = time.time()
-print("Time for reduce_sum: {}".format((stop_time-start_time) / 10000))
-
-
-
+    print(val_a, val_a.shape)
+    print(val_hidden, val_hidden.shape)

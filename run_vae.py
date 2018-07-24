@@ -4,16 +4,9 @@ import time
 import argparse
 from load_data import *
 from generate_data import *
-from vae_model import VAE
+from vae_model import *
 
 FLAGS = None
-model_dir = None
-log_dir = None
-result_dir = None
-
-
-def debug():
-    pass
 
 
 def train():
@@ -25,53 +18,47 @@ def train():
     else:
         raise ValueError("Unsupported dataset!")
 
-
     l_ratio = FLAGS.labelled_size / data_loader.train_size
+    l_batch_size = max(1, int(l_ratio * FLAGS.batch_size))
+    u_batch_size = max(1, int((1 - l_ratio) * FLAGS.batch_size))
 
+    if data_loader.pure_unsupervised:
+        l_batch_size = 0
 
-    if l_train_data is None:
-        pass
-    if u_train_data is None:
-        pass
+    if data_loader.pure_supervised:
+        l_batch_size = FLAGS.batch_size
+        u_next_element = None
+    else:
+        u_train_data = u_train_data \
+            .apply(tf.contrib.data.shuffle_and_repeat(10000)) \
+            .batch(u_batch_size) \
+            .prefetch(buffer_size=u_batch_size)
+        u_iterator = u_train_data.make_one_shot_iterator()
+        u_next_element = u_iterator.get_next()
 
-    l_train_data = l_train_data.apply(tf.contrib.data.shuffle_and_repeat(10000)) \
+    l_train_data = l_train_data \
+        .apply(tf.contrib.data.shuffle_and_repeat(10000)) \
+        .batch(l_batch_size) \
+        .prefetch(buffer_size=l_batch_size)
+    valid_data = valid_data\
         .batch(FLAGS.batch_size) \
         .prefetch(buffer_size=FLAGS.batch_size)
-    u_train_data = u_train_data.apply(tf.contrib.data.shuffle_and_repeat(10000)) \
-        .batch(FLAGS.batch_size) \
-        .prefetch(buffer_size=FLAGS.batch_size)
-    valid_data = valid_data.batch(FLAGS.batch_size) \
-        .prefetch(buffer_size=FLAGS.batch_size)
+    l_train_iterator = l_train_data.make_one_shot_iterator()
+    valid_iterator = valid_data.make_initializable_iterator()
 
     handle = tf.placeholder(tf.string, shape=[])
     l_iterator = tf.data.Iterator.from_string_handle(
         handle,
-        l_train_data.output_types,
-        l_train_data.output_shapes
-    )
-    u_iterator = tf.data.Iterator.from_structure(
-        u_train_data.output_types,
-        u_train_data.output_shapes
+        valid_data.output_types,
+        valid_data.output_shapes
     )
     l_next_element = l_iterator.get_next()
-    u_next_element = u_iterator.get_next()
 
-    if data_loader.pure_supervised:
-        x_batch = l_next_element[0]
-        y_batch = l_next_element[1]
-    elif data_loader.pure_unsupervised:
-        x_batch = u_next_element
-        y_batch = None
-    else:
-        x_batch = tf.concat([l_next_element[0], u_next_element], axis=0)
-        y_batch = l_next_element[1]
+    model = VAE(FLAGS,
+                data_loader.pure_supervised,
+                data_loader.pure_unsupervised)
+    model.build_model(l_next_element[0], l_next_element[1], u_next_element)
 
-    l_train_iterator = l_train_data.make_one_shot_iterator()
-    u_train_init_op = u_iterator.make_initializer(u_train_data)
-    valid_iterator = valid_data.make_initializable_iterator()
-
-    model = VAE(FLAGS)
-    model.build_model(x_batch, y_batch, l_batch_size)
     init_op = tf.global_variables_initializer()
     saver = tf.train.Saver()
 
@@ -80,7 +67,7 @@ def train():
     with tf.Session(config=config) as sess:
         if FLAGS.restore:
             print("Reading checkpoints ...")
-            ckpt = tf.train.get_checkpoint_state(model_dir)
+            ckpt = tf.train.get_checkpoint_state(FLAGS.model_para_path)
             try:
                 saver.restore(sess, ckpt.model_checkpoint_path)
             except:
@@ -88,25 +75,24 @@ def train():
         else:
             sess.run(init_op)
 
-        sess.run(u_train_init_op)
         train_handle = sess.run(l_train_iterator.string_handle())
         valid_handle = sess.run(valid_iterator.string_handle())
         train_writer = tf.summary.FileWriter(
-            log_dir + 'train',
+            FLAGS.log_path + 'train',
             sess.graph
         )
         valid_writer = tf.summary.FileWriter(
-            log_dir + 'valid'
+            FLAGS.log_path + 'valid'
         )
 
         for train_step in range(FLAGS.num_epoch * data_loader.train_size
                                 // FLAGS.batch_size):
             start_time = time.time()
 
-            _, train_loss, x_truth, x_gen = sess.run(
-                [model.train_op, model.L, x_batch, model.x_gen],
-                feed_dict={handle: train_handle}
-            )
+            _, train_loss = sess.run([model.train_op, model.L], feed_dict={
+                handle: train_handle,
+                model.l_batch_size: l_batch_size
+            })
             elapsed_time = time.time() - start_time
 
             print("Step {} / Epoch {} : Loss {:.2f} ({:.4f} ms)"
@@ -145,13 +131,14 @@ def train():
 
             if train_step % FLAGS.save_freq == 0:
                 saver.save(sess,
-                           os.path.join(model_dir, 'model'),
+                           os.path.join(FLAGS.model_para_path, 'model'),
                            global_step=train_step)
 
+            '''
             if train_step % FLAGS.visual_freq == 0:
                 save_as_images_grid(
                     "{}epoch{}_truth".format(
-                        result_dir,
+                        FLAGS.result_path,
                         train_step * FLAGS.batch_size // data_loader.train_size
                     ),
                     x_truth[:FLAGS.batch_size],
@@ -160,39 +147,40 @@ def train():
                 )
                 save_as_images_grid(
                     "{}epoch{}_decode".format(
-                        result_dir,
+                        FLAGS.result_path,
                         train_step * FLAGS.batch_size // data_loader.train_size
                     ),
                     x_gen[:FLAGS.batch_size],
                     FLAGS.batch_size,
                     10
                 )
+            '''
 
 
 def generate():
     model = VAE(FLAGS)
     model.build_model(
         tf.constant(0., shape=[FLAGS.batch_size, FLAGS.dim_x]),
-        None,
-        FLAGS.batch_size
+        tf.constant(0., shape=[FLAGS.batch_size, FLAGS.dim_y]),
+        tf.constant(0., shape=[FLAGS.batch_size, FLAGS.dim_x]),
     )
     z = tf.random_normal([FLAGS.batch_size, FLAGS.dim_z])
-    model.build_generate(z)
 
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
     with tf.Session(config=config) as sess:
         print("Reading checkpoints ...")
         saver = tf.train.Saver()
-        ckpt = tf.train.get_checkpoint_state(model_dir)
+        ckpt = tf.train.get_checkpoint_state(FLAGS.model_para_path)
         try:
             saver.restore(sess, ckpt.model_checkpoint_path)
         except:
-            pass
+            raise ValueError("Fail to load ckpt!")
 
-        x_gen = sess.run(model.x_gen)
+        x_gen = sess.run(model.x_gen, feed_dict={model.z: z,
+                                                 model.l_batch_size: 0})
         save_as_images_grid(
-            "{}generate_label{}".format(result_dir, FLAGS.labelled_size),
+            "{}generate_label{}".format(FLAGS.result_path, FLAGS.labelled_size),
             x_gen,
             FLAGS.batch_size,
             10
@@ -215,31 +203,30 @@ def encode():
     test_iterator = test_data.make_one_shot_iterator()
     next_element = test_iterator.get_next()
 
-    model = VAE(FLAGS)
-    model.build_model(*next_element, FLAGS.batch_size)
+    model = VAE(FLAGS, pure_supervised=True)
+    model.build_model(next_element[0], next_element[1], None)
     saver = tf.train.Saver()
 
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
     with tf.Session(config=config) as sess:
-        if data_loader.pure_unsupervised:
-            sess.run(tf.global_variables_initializer())
         print("Reading checkpoints ...")
-        ckpt = tf.train.get_checkpoint_state(model_dir)
+        ckpt = tf.train.get_checkpoint_state(FLAGS.model_para_path)
         try:
             saver.restore(sess, ckpt.model_checkpoint_path)
         except:
-            pass
+            raise ValueError("Fail to load ckpt!")
 
         z_list, y_list = [], []
         for test_step in range(data_loader.test_size // FLAGS.batch_size):
-            z_batch, y_batch = sess.run([model.z, tf.argmax(next_element[1])])
+            z_batch, y_batch = sess.run([model.z, tf.argmax(next_element[1])],
+                                        feed_dict={model.l_batch_size: FLAGS.batch_size})
             z_list.append(z_batch)
             y_list.append(y_batch)
 
         z = np.vstack(z_list)
         y = np.vstack(y_list)
-        visualize_z_space(result_dir + "z_space", z, y)
+        visualize_z_space(FLAGS.result_path + "z_space", z, y)
 
 
 def test():
@@ -258,24 +245,23 @@ def test():
     test_iterator = test_data.make_one_shot_iterator()
     next_element = test_iterator.get_next()
 
-    model = VAE(FLAGS)
-    model.build_model(*next_element, FLAGS.batch_size)
+    model = VAE(FLAGS, pure_supervised=True)
+    model.build_model(next_element[0], next_element[1], None)
     saver = tf.train.Saver(allow_empty=True)
 
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
     with tf.Session(config=config) as sess:
-        if data_loader.pure_unsupervised:
-            sess.run(tf.global_variables_initializer())
         print("Reading checkpoints ...")
-        ckpt = tf.train.get_checkpoint_state(model_dir)
+        ckpt = tf.train.get_checkpoint_state(FLAGS.model_para_path)
         try:
             saver.restore(sess, ckpt.model_checkpoint_path)
         except:
-            pass
+            raise ValueError("Fail to load ckpt!")
         total_accuracy = 0
         for test_step in range(data_loader.test_size // FLAGS.batch_size):
-            accuracy = sess.run(model.accuracy)
+            accuracy = sess.run(model.accuracy,
+                                feed_dict={model.l_batch_size: FLAGS.batch_size})
             total_accuracy += accuracy * FLAGS.batch_size
         print("Accuracy on test set: {:.4f}."
               .format(total_accuracy / data_loader.test_size))
@@ -291,21 +277,18 @@ def main(_):
     elif FLAGS.action == "encode":
         encode()
     else:
-        debug()
+        raise ValueError("Unsupported mode!")
 
 
-def check_model(flags):
-    flags = flags.__dict__
-    for key in flags:
-        print('{}={}'.format(key, flags[key]))
+def print_hyper_paras():
+    for key, value in FLAGS.__dict__.items():
+        print('{}={}'.format(key, value))
 
 
 def make_dirs():
     for key, value in FLAGS.__dict__.items():
         if key.endswith("path"):
             dir_name = value.rpartition("/")[0]
-            if "{}" in dir_name:
-                dir_name = dir_name.format(FLAGS.labelled_size)
             if not os.path.exists(dir_name):
                 os.makedirs(dir_name)
 
@@ -325,7 +308,7 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--input_file_path',
-        default='dataset/mnist_labelled_size{}.pkl.gz',
+        default='dataset/mnist_l1000_u10000.pkl.gz',
         help='the path of input data file'
     )
     parser.add_argument(
@@ -361,7 +344,7 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--lr',
-        default=0.01,
+        default=0.001,
         type=float
     )
     parser.add_argument(
@@ -381,7 +364,7 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--labelled_size',
-        default=100,
+        default=1000,
         type=int
     )
     parser.add_argument(
@@ -423,9 +406,9 @@ if __name__ == '__main__':
     )
 
     FLAGS, unparsed = parser.parse_known_args()
-    model_dir = FLAGS.model_para_path.format(FLAGS.labelled_size)
-    log_dir = FLAGS.log_path.format(FLAGS.labelled_size)
-    result_dir = FLAGS.result_path.format(FLAGS.labelled_size)
-    check_model(FLAGS)
+    FLAGS.model_para_path = FLAGS.model_para_path.format(FLAGS.labelled_size)
+    FLAGS.log_path = FLAGS.log_path.format(FLAGS.labelled_size)
+    FLAGS.result_path = FLAGS.result_path.format(FLAGS.labelled_size)
+    print_hyper_paras()
     make_dirs()
     tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)

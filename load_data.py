@@ -55,7 +55,10 @@ class DataLoader(object):
     def load_semi_mnist(self, f_name):
         train, valid, test = self.read_pickle_file(f_name, if_semi=True)
         if self.pure_unsupervised:
-            l_train_data = None
+            l_train_data = tf.data.Dataset.from_tensor_slices((
+                tf.constant(0, dtype=tf.float32, shape=[]),
+                tf.constant(0, dtype=tf.float32, shape=[])
+            ))
         else:
             l_train_data = self.load_data_with_label(train[0], train[1])
 

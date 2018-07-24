@@ -7,11 +7,13 @@ trans_activation = {
 
 
 class VAE(object):
-    def __init__(self, FLAGS):
+    def __init__(self, FLAGS, pure_supervised=False, pure_unsupervised=False):
         self.x = None
         self.y = None
         self.FLAGS = FLAGS
-        self.l_batch_size = None
+        self.l_batch_size = tf.placeholder(tf.int32, shape=[])
+        self.pure_supervised = pure_supervised
+        self.pure_unsupervised = pure_unsupervised
         self.activation = trans_activation[FLAGS.activation]
         self.z_mean = None
         self.z_var = None
@@ -24,6 +26,7 @@ class VAE(object):
         self.L = None
         self.train_op = None
         self.x_gen = None
+        self.x_gen_sigmoid = None
         self.merged_summary = None
         self.prediction = None
         self.accuracy = None
@@ -51,10 +54,11 @@ class VAE(object):
                                          activation=self.activation)
             self.x_gen = tf.layers.dense(hidden, self.FLAGS.dim_x,
                                          activation=None)
+            self.x_gen_sigmoid = tf.nn.sigmoid(self.x_gen)
 
     def build_discriminator(self):
         with tf.variable_scope("Discriminator"):
-            hidden = self.z
+            hidden = self.z[:self.l_batch_size, :]
             for i in range(self.FLAGS.num_class_layers):
                 hidden = tf.layers.dense(hidden, self.FLAGS.dim_hid,
                                          activation=self.activation)
@@ -66,7 +70,8 @@ class VAE(object):
                     tf.equal(
                         self.prediction,
                         true_y
-                    ), tf.float32
+                    ),
+                    tf.float32
                 )
 
             )
@@ -86,11 +91,11 @@ class VAE(object):
                 axis=1
             )
 
-            if self.y is None:
+            if self.pure_unsupervised:
                 self.class_loss = tf.constant(0, dtype=tf.float32)
             else:
                 self.class_loss = tf.nn.softmax_cross_entropy_with_logits(
-                    logits=self.class_logits[:self.l_batch_size:, :],
+                    logits=self.class_logits,
                     labels=self.y
                 )
 
@@ -110,19 +115,16 @@ class VAE(object):
         tf.summary.scalar('Class Loss', tf.reduce_mean(self.class_loss))
         self.merged_summary = tf.summary.merge_all()
 
-    def build_model(self, input_x, input_y, l_batch_size):
-        self.x = input_x
-        self.y = input_y
-        self.l_batch_size = l_batch_size
+    def build_model(self, labelled_x, labelled_y, unlabelled_x):
+        if self.pure_supervised:
+            self.x = labelled_x
+        else:
+            self.x = tf.concat([labelled_x, unlabelled_x], axis=0)
+        self.y = labelled_y
+
         with tf.variable_scope("VAE"):
             self.build_encoder()
             self.build_decoder()
-            if self.y is not None:
-                self.build_discriminator()
+            self.build_discriminator()
             self.build_loss()
 
-    def build_generate(self, z):
-        self.z = z
-        with tf.variable_scope("VAE", reuse=True):
-            self.build_decoder()
-            self.x_gen = tf.nn.sigmoid(self.x_gen)
