@@ -4,7 +4,9 @@ import tensorflow as tf
 
 
 class DataLoader(object):
-    def __init__(self):
+    def __init__(self, FLAGS):
+        self.dim_x = FLAGS.dim_x
+        self.dim_y = FLAGS.dim_y
         self.train_size = None
         self.valid_size = None
         self.test_size = None
@@ -33,7 +35,7 @@ class DataLoader(object):
 
     def load_data_with_label(self, image_array, label_array):
         def _make_onehot(label):
-            return tf.one_hot(label, 10)
+            return tf.one_hot(label, self.dim_y)
 
         images = tf.data.Dataset.from_tensor_slices(image_array)
         labels = tf.data.Dataset.from_tensor_slices(label_array)\
@@ -56,8 +58,8 @@ class DataLoader(object):
         train, valid, test = self.read_pickle_file(f_name, if_semi=True)
         if self.pure_unsupervised:
             l_train_data = tf.data.Dataset.from_tensors((
-                tf.constant(0, dtype=tf.float32, shape=[]),
-                tf.constant(0, dtype=tf.float32, shape=[])
+                tf.constant(0, dtype=tf.float32, shape=[1, self.dim_x]),
+                tf.constant(0, dtype=tf.float32, shape=[1, self.dim_y])
             ))
         else:
             l_train_data = self.load_data_with_label(train[0], train[1])

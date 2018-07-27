@@ -67,7 +67,7 @@ class VAE(object):
             for i in range(self.FLAGS.num_class_layers):
                 hidden = tf.layers.dense(hidden, self.FLAGS.dim_hid,
                                          activation=self.activation)
-            self.class_logits = tf.layers.dense(hidden, 10, activation=None)
+            self.class_logits = tf.layers.dense(hidden, self.FLAGS.dim_y, activation=None)
             self.prediction = tf.argmax(self.class_logits, axis=1)
             true_y = tf.argmax(self.y, axis=1)
             self.accuracy = tf.reduce_mean(
@@ -78,7 +78,6 @@ class VAE(object):
                     ),
                     tf.float32
                 )
-
             )
 
     def build_loss(self):
@@ -118,6 +117,7 @@ class VAE(object):
         tf.summary.scalar('KLD Loss', tf.reduce_mean(self.kld_loss))
         tf.summary.scalar('Recon Loss', tf.reduce_mean(self.recon_loss))
         tf.summary.scalar('Class Loss', tf.reduce_mean(self.class_loss))
+        tf.summary.scalar('Accuracy', tf.reduce_mean(self.accuracy))
         self.merged_summary = tf.summary.merge_all()
 
     def build_model(self, labelled_x, labelled_y, unlabelled_x):

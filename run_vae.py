@@ -11,7 +11,7 @@ FLAGS = None
 
 def train():
     # Load data as 'tf.data.Dataset'
-    data_loader = DataLoader()
+    data_loader = DataLoader(FLAGS)
     if FLAGS.dataset == "mnist":
         l_train_data, u_train_data, valid_data, _ = data_loader.load_semi_mnist(
             FLAGS.input_file_path
@@ -122,27 +122,30 @@ def train():
             if train_step % FLAGS.eval_freq == 0:
                 sess.run(valid_iterator.initializer)
                 total_valid_loss = 0
+                total_accuracy = 0
                 summary = None
 
                 for valid_step in range(data_loader.valid_size
                                         // FLAGS.batch_size):
                     if summary is None:
-                        valid_loss, summary = sess.run(
-                            [model.L, model.merged_summary],
+                        valid_loss, accuracy, summary = sess.run(
+                            [model.L, model.accuracy, model.merged_summary],
                             feed_dict={handle: valid_handle,
                                        model.l_batch_size: FLAGS.batch_size}
                         )
                     else:
-                        valid_loss = sess.run(
-                            model.L,
+                        valid_loss, accuracy = sess.run(
+                            [model.L, model.accuracy],
                             feed_dict={handle: valid_handle,
                                        model.l_batch_size: FLAGS.batch_size}
                         )
                     total_valid_loss += valid_loss * FLAGS.batch_size
+                    total_accuracy += accuracy * FLAGS.batch_size
 
                 valid_writer.add_summary(summary, train_step)
-                print("[Validation] Loss {:.2f}"
-                      .format(total_valid_loss / data_loader.valid_size))
+                print("[Validation] Loss {:.2f} Accuracy {:.4f}"
+                      .format(total_valid_loss / data_loader.valid_size,
+                              total_accuracy / data_loader.valid_size))
 
             if train_step % FLAGS.save_freq == 0:
                 saver.save(sess,
@@ -199,8 +202,8 @@ def generate():
             raise ValueError("Fail to load ckpt!")
 
         # Generate x_hat from randomly sampled z
-        x_gen = sess.run(model.x_gen, feed_dict={model.z: z,
-                                                 model.l_batch_size: 0})
+        x_gen = sess.run(model.x_gen_sigmoid, feed_dict={model.z: z,
+                                                         model.l_batch_size: 0})
 
         # Save as pic
         save_as_images_grid(
@@ -239,7 +242,7 @@ def test_or_encode():
         visualize_z_space(FLAGS.result_path + "z_space", z, y)
 
     # Prepare for input pipeline using 'tf.data'
-    data_loader = DataLoader()
+    data_loader = DataLoader(FLAGS)
     if FLAGS.dataset == "mnist":
         _, _, _, test_data = data_loader.load_semi_mnist(
             FLAGS.input_file_path
@@ -303,7 +306,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--action',
-        default='generate',
+        default='train',
         choices=['train', 'test', 'generate', 'encode'],
     )
     parser.add_argument(
@@ -320,6 +323,11 @@ if __name__ == '__main__':
     parser.add_argument(
         '--dim_x',
         default=784,
+        type=int
+    )
+    parser.add_argument(
+        '--dim_y',
+        default=10,
         type=int
     )
     parser.add_argument(
@@ -370,7 +378,7 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--labelled_size',
-        default=5000,
+        default=0,
         type=int
     )
     parser.add_argument(
