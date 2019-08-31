@@ -41,11 +41,14 @@ class VAE(object):
             hidden = self.x
             for i in range(self.FLAGS.num_layers):
                 hidden = tf.layers.dense(hidden, self.FLAGS.dim_hid,
-                                         activation=self.activation)
+                                         activation=self.activation,
+                                         name='hidden_%d' % i)
             self.z_mean = tf.layers.dense(hidden, self.FLAGS.dim_z,
-                                          activation=None)
+                                          activation=None,
+                                          name='mean')
             z_logvar = tf.layers.dense(hidden, self.FLAGS.dim_z,
-                                       activation=None)
+                                       activation=None,
+                                       name='log_var')
             self.z_var = tf.exp(z_logvar)
             self.z_std = tf.sqrt(self.z_var)
             eps = tf.random_normal(tf.shape(self.z_mean), mean=0.0, stddev=1.0)
@@ -56,9 +59,11 @@ class VAE(object):
             hidden = self.z
             for i in range(self.FLAGS.num_layers):
                 hidden = tf.layers.dense(hidden, self.FLAGS.dim_hid,
-                                         activation=self.activation)
+                                         activation=self.activation,
+                                         name='hidden_%d' % i)
             self.x_gen = tf.layers.dense(hidden, self.FLAGS.dim_x,
-                                         activation=None)
+                                         activation=None,
+                                         name='x_gen')
             self.x_gen_sigmoid = tf.nn.sigmoid(self.x_gen)
 
     def build_discriminator(self):
@@ -118,7 +123,7 @@ class VAE(object):
         tf.summary.scalar('Recon Loss', tf.reduce_mean(self.recon_loss))
         tf.summary.scalar('Class Loss', tf.reduce_mean(self.class_loss))
         tf.summary.scalar('Accuracy', tf.reduce_mean(self.accuracy))
-        self.merged_summary = tf.summary.merge_all()
+        #self.merged_summary = tf.summary.merge_all()
 
     def build_model(self, labelled_x, labelled_y, unlabelled_x):
         if self.pure_supervised:
@@ -134,3 +139,24 @@ class VAE(object):
             self.build_decoder()
             self.build_discriminator()
             self.build_loss()
+
+        #     scope = tf.get_variable_scope()
+        #
+        #
+        # variables = tf.get_collection(
+        #     key=tf.GraphKeys.TRAINABLE_VARIABLES,
+        #     scope=scope.name
+        # )
+        all_variables = tf.trainable_variables()
+        all_gradients = tf.gradients(self.L, all_variables)
+
+        for var, grad in zip(all_variables, all_gradients):
+
+            if grad is None:
+                continue
+            tf.summary.scalar('max_%s' % var.name, tf.reduce_max(grad))
+            tf.summary.scalar('norm_%s' % var.name, tf.norm(grad))
+            # tf.summary.scalar('max_%s' % var.name, tf.reduce_max(grad))
+            # tf.summary.scalar('max_%s' % var.name, tf.reduce_max(grad))
+        self.merged_summary = tf.summary.merge_all()
+

@@ -5,9 +5,10 @@ from collections import defaultdict
 
 fin_name = "dataset/mnist_28.pkl.gz"
 fout_name = "dataset/mnist_l{}_u{}.pkl.gz"
+#fixed_size = 1000
+#settings = [0, 1000, 10000, 25000, 40000]
 fixed_size = 40000
-settings = [0, 10, 100, 1000, 5000]
-
+settings = [0, 10, 100, 1000, 40000]
 
 class DataSampler(object):
     def __init__(self, x_all, y_all):
@@ -46,7 +47,7 @@ class DataSampler(object):
         if with_label:
             shuffle_indices = np.random.permutation(pack_size)
             x = np.concatenate(x_list, axis=0)[shuffle_indices]
-            y = np.asarray(y_list)[shuffle_indices]
+            y = np.asarray(y_list, dtype=np.int64)[shuffle_indices]
             return x, y
         else:
             x = np.concatenate(x_list, axis=0)
@@ -91,5 +92,5 @@ def sample_fix_unlabelled(unlabelled_size, labelled_settings):
 
 
 if __name__ == "__main__":
-    #sample_fix_labelled(fixed_size, settings)
-    sample_fix_unlabelled(fixed_size, settings)
+    sample_fix_labelled(fixed_size, settings)
+    #sample_fix_unlabelled(fixed_size, settings)
